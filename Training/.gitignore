@@ -1,0 +1,20 @@
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Dataset
+data/
+datasets/
+
+# Model
+
+*.ckpt
+
+# Large files
+*.zip
+*.rar
+*.tar
+*.7z
+
+.vscode/
