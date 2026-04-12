@@ -1,0 +1,13 @@
+torch
+torchvision
+numpy 
+torchvision
+scipy
+thop
+Pillow
+tqdm
+Flask==2.3.2
+opencv-python==4.8.1.78
+requests==2.31.0
+ultralytics==8.0.196
+waitress==2.1.2

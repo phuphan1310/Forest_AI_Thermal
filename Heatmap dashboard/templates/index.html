@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AI Heatmap Monitoring Center</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        .map-section { flex: 2; height: 100%; position: relative; }
+        #map { width: 100%; height: 100%; }
+
+        .sidebar { flex: 1; display: flex; flex-direction: column; background: #121212; border-left: 1px solid #333; }
+        
+        /* Phần header của sidebar thay cho video box cũ */
+        .sidebar-header { 
+            padding: 20px; 
+            background: #1a1a1a; 
+            border-bottom: 2px solid #ff9500;
+            text-align: center;
+        }
+
+        .noti-area { flex: 1; overflow-y: auto; padding: 20px; }
+        .card {
+            background: rgba(45, 45, 45, 0.8);
+            border-radius: 18px;
+            padding: 15px; margin-bottom: 15px;
+            display: flex; gap: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card img { width: 65px; height: 65px; border-radius: 12px; object-fit: cover; }
+        .card-title { color: #ff9500; font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="map-section"><div id="map"></div></div>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2 style="margin:0; color:#ff9500;">AI MONITORING</h2>
+            <div style="font-size: 12px; color: #888;">Hệ thống giám sát cây khô qua Heatmap</div>
+        </div>
+        <div id="noti-list" class="noti-area">
+            <h3 style="color: #666; font-size: 12px; letter-spacing: 1px;">NHẬT KÝ CẢNH BÁO AI</h3>
+        </div>
+    </div>
+
+    <script>
+        // Khởi tạo bản đồ tại Hà Nội (Thanh Xuân)
+        var map = L.map('map').setView([21.000, 105.815], 14);
+        L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { attribution: 'Google Satellite' }).addTo(map);
+
+        var gridLayer = L.layerGroup().addTo(map);
+
+        function getColor(count) {
+            if (count >= 5) return '#ff0000'; // Đỏ (Mật độ cao)
+            if (count >= 3) return '#ff6600'; // Cam
+            return '#00ff00'; // Xanh lá
+        }
+
+        function updateUI() {
+            fetch('/get_data')
+                .then(res => res.json())
+                .then(data => {
+                    let notiHtml = '<h3 style="color: #666; font-size: 12px; letter-spacing: 1px;">NHẬT KÝ CẢNH BÁO AI</h3>';
+                    let gridCounts = {}; 
+
+                    data.slice().reverse().forEach(item => {
+                        notiHtml += `
+                            <div class="card">
+                                <img src="/static/detections/${item.img}">
+                                <div class="card-body">
+                                    <div class="card-title">Cây khô bất thường</div>
+                                    <div style="font-size: 12px;">Nhiệt độ: <b style="color:red;">${item.temp}°C</b></div>
+                                    <div style="font-size: 11px; color: #777;">GPS: ${item.lat.toFixed(5)}, ${item.lon.toFixed(5)}</div>
+                                </div>
+                            </div>
+                        `;
+
+                        // Gom nhóm vào lưới 100m
+                        let key = (Math.round(item.lat * 1000) / 1000) + "_" + (Math.round(item.lon * 1000) / 1000);
+                        gridCounts[key] = (gridCounts[key] || 0) + 1;
+                    });
+                    document.getElementById('noti-list').innerHTML = notiHtml;
+
+                    gridLayer.clearLayers();
+                    for (let key in gridCounts) {
+                        let [lat, lon] = key.split("_").map(parseFloat);
+                        let count = gridCounts[key];
+                        L.rectangle([[lat - 0.0005, lon - 0.0005], [lat + 0.0005, lon + 0.0005]], {
+                            color: "white", weight: 0.1,
+                            fillColor: getColor(count), fillOpacity: 0.6
+                        }).addTo(gridLayer);
+                    }
+                });
+        }
+        setInterval(updateUI, 3000);
+    </script>
+</body>
+</html>
