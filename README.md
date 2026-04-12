@@ -43,7 +43,7 @@ The model is sequentially trained and fine-tuned across the following datasets:
 
 All pretrained models can be accessed upon request.  
 
-Our model undergoes **sequential fine-tuning across four datasets**, with progressive improvement in performance at each stage.
+Our model undergoes **sequential fine-tuning across two datasets**, with progressive improvement in performance at each stage.
 
 ---
 
@@ -67,7 +67,7 @@ python train_flir.py \
 ## Stage 2: Fine-tuning on Kaist
 
 ```bash
-python train_flam3_from_flir.py \
+python train_flame3_from_flir.py \
   --pretrained [FLIR_MODEL_PATH] \
   --scale 4 \
   --num_feats 32 \
